@@ -15,6 +15,7 @@ impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(PhysicsPlugin)
             .add_systems(Startup, systems::setup_system)
-            .add_systems(Update, systems::handle_input_system.after(PhysicsSet));
+            .add_systems(Update, systems::handle_input_system.after(PhysicsSet))
+            .add_systems(Update, (systems::spawn_seagull, systems::despawn_seagull));
     }
 }
