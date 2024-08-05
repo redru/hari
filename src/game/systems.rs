@@ -1,10 +1,16 @@
-use std::f32::consts::PI;
+use std::{f32::consts::PI, time::Duration};
 
 use bevy::prelude::*;
-use hari::physics::{components::Velocity, PhysicsMovementBundle};
+use hari::physics::{
+    components::{Collider, Velocity},
+    PhysicsMovementBundle,
+};
 use rand::prelude::*;
 
-use super::components::{Player, Seagull};
+use super::{
+    components::{Player, Seagull, SeagullCounter, SeagullSpawnTimer},
+    MAX_SEAGULLS,
+};
 
 pub fn setup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Camera
@@ -29,6 +35,7 @@ pub fn setup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
         PhysicsMovementBundle::new(player_position.clone(), Vec3::new(0., 0., 0.)),
         Player,
+        Collider::default(),
     ));
 }
 
@@ -57,29 +64,43 @@ pub fn handle_input_system(
 
 pub fn spawn_seagull(
     mut commands: Commands,
+    time: Res<Time<Fixed>>,
+    mut seagull_counter: ResMut<SeagullCounter>,
+    mut seagull_spawn_timer: ResMut<SeagullSpawnTimer>,
     asset_server: Res<AssetServer>,
-    sea_gull_query: Query<&Seagull>,
 ) {
-    let mut rng = rand::thread_rng();
-    let starting_x = rng.gen::<f32>() * 1700. - 850.;
+    if seagull_counter.0 < MAX_SEAGULLS {
+        if seagull_spawn_timer.0.tick(time.delta()).just_finished() {
+            let mut rng = rand::thread_rng();
+            let starting_x = rng.gen::<f32>() * 1700. - 850.;
 
-    let starting_position = Vec3::new(starting_x, 300., 1.);
+            let starting_position = Vec3::new(starting_x, 600., 1.);
 
-    if sea_gull_query.is_empty() {
-        commands.spawn((
-            SpriteBundle {
-                transform: Transform::from_translation(starting_position.clone()),
-                texture: asset_server.load("1920x1080/gull_1_64x50.png"),
-                ..default()
-            },
-            Seagull,
-            PhysicsMovementBundle::new(starting_position, Vec3::new(0., -280., 0.)),
-        ));
+            commands.spawn((
+                SpriteBundle {
+                    transform: Transform::from_translation(starting_position.clone()),
+                    texture: asset_server.load("1920x1080/gull_1_64x50.png"),
+                    ..default()
+                },
+                Seagull,
+                PhysicsMovementBundle::new(starting_position, Vec3::new(0., -280., 0.)),
+                Collider::default(),
+            ));
+
+            seagull_counter.0 += 1;
+
+            let mut rng = rand::thread_rng();
+            let new_spawn_duration = rng.gen_range(100..=1300);
+            seagull_spawn_timer
+                .0
+                .set_duration(Duration::from_millis(new_spawn_duration));
+        }
     }
 }
 
 pub fn despawn_seagull(
     mut commands: Commands,
+    mut seagull_counter: ResMut<SeagullCounter>,
     sea_gull_query: Query<(Entity, &Transform), With<Seagull>>,
 ) {
     let bottom_limit = -1080. / 2. + 300.;
@@ -87,6 +108,7 @@ pub fn despawn_seagull(
     for (entity, &transform) in sea_gull_query.iter() {
         if transform.translation.y < bottom_limit {
             commands.entity(entity).despawn();
+            seagull_counter.0 -= 1;
         }
     }
 }

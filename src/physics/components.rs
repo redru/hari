@@ -17,3 +17,14 @@ pub struct PhysicalTranslation(pub Vec3);
 /// Used for interpolation in the `update_rendered_transform` system.
 #[derive(Debug, Component, Clone, Copy, PartialEq, Default, Deref, DerefMut)]
 pub struct PreviousPhysicalTranslation(pub Vec3);
+
+#[derive(Debug, Component, Clone, Copy, PartialEq)]
+pub struct Collider {
+    pub enabled: bool,
+}
+
+impl Default for Collider {
+    fn default() -> Self {
+        Self { enabled: true }
+    }
+}
