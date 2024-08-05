@@ -72,7 +72,7 @@ pub fn spawn_seagull(
     if seagull_counter.0 < MAX_SEAGULLS {
         if seagull_spawn_timer.0.tick(time.delta()).just_finished() {
             let mut rng = rand::thread_rng();
-            let starting_x = rng.gen::<f32>() * 1700. - 850.;
+            let starting_x = rng.gen_range(-850.0..=850.0);
 
             let starting_position = Vec3::new(starting_x, 600., 1.);
 
