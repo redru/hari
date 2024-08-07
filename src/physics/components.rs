@@ -18,13 +18,19 @@ pub struct PhysicalTranslation(pub Vec3);
 #[derive(Debug, Component, Clone, Copy, PartialEq, Default, Deref, DerefMut)]
 pub struct PreviousPhysicalTranslation(pub Vec3);
 
-#[derive(Debug, Component, Clone, Copy, PartialEq)]
-pub struct Collider {
+#[derive(Component)]
+pub struct RectangleCollider {
     pub enabled: bool,
+    pub width: f32,
+    pub height: f32,
 }
 
-impl Default for Collider {
-    fn default() -> Self {
-        Self { enabled: true }
+impl RectangleCollider {
+    pub fn new(enabled: bool, width: f32, height: f32) -> Self {
+        Self {
+            enabled,
+            width,
+            height,
+        }
     }
 }

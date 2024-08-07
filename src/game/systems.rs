@@ -1,18 +1,24 @@
 use std::{f32::consts::PI, time::Duration};
 
-use bevy::prelude::*;
+use bevy::{color::palettes::css::GREEN, prelude::*, sprite::MaterialMesh2dBundle};
 use hari::physics::{
-    components::{Collider, Velocity},
+    components::{RectangleCollider, Velocity},
+    structs::CollisionRectangle,
     PhysicsMovementBundle,
 };
 use rand::prelude::*;
 
 use super::{
     components::{Player, Seagull, SeagullCounter, SeagullSpawnTimer},
-    MAX_SEAGULLS,
+    MAX_SEAGULLS, PLAYER_COLLIDER_HEIGHT, PLAYER_COLLIDER_OFFSET, PLAYER_COLLIDER_WIDTH,
 };
 
-pub fn setup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn setup_system(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
     // Camera
     commands.spawn(Camera2dBundle::default());
 
@@ -27,16 +33,34 @@ pub fn setup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
     let player_position = Vec3::new(0., -60., 100.);
 
     // Player
-    commands.spawn((
-        SpriteBundle {
-            transform: Transform::from_translation(player_position.clone()),
-            texture: boat_texture.clone(),
-            ..default()
-        },
-        PhysicsMovementBundle::new(player_position.clone(), Vec3::new(0., 0., 0.)),
-        Player,
-        Collider::default(),
-    ));
+    commands
+        .spawn((
+            SpriteBundle {
+                transform: Transform::from_translation(player_position.clone()),
+                texture: boat_texture.clone(),
+                ..default()
+            },
+            PhysicsMovementBundle::new(player_position.clone(), Vec3::new(0., 0., 0.)),
+            Player,
+            RectangleCollider::new(true, PLAYER_COLLIDER_WIDTH, PLAYER_COLLIDER_HEIGHT),
+        ))
+        .with_children(|parent| {
+            parent.spawn(MaterialMesh2dBundle {
+                mesh: meshes
+                    .add(Rectangle::new(
+                        PLAYER_COLLIDER_WIDTH,
+                        PLAYER_COLLIDER_HEIGHT,
+                    ))
+                    .into(),
+                transform: Transform::from_translation(Vec3::new(
+                    PLAYER_COLLIDER_OFFSET.x,
+                    PLAYER_COLLIDER_OFFSET.y,
+                    100.,
+                )),
+                material: materials.add(Color::from(GREEN)),
+                ..default()
+            });
+        });
 }
 
 /// Handle keyboard input to move the player.
@@ -84,7 +108,6 @@ pub fn spawn_seagull(
                 },
                 Seagull,
                 PhysicsMovementBundle::new(starting_position, Vec3::new(0., -280., 0.)),
-                Collider::default(),
             ));
 
             seagull_counter.0 += 1;
@@ -111,4 +134,16 @@ pub fn despawn_seagull(
             seagull_counter.0 -= 1;
         }
     }
+}
+
+pub fn check_player_collision(
+    player_collider_query: Query<(&Transform, &RectangleCollider), With<Player>>,
+) {
+    let (transform, rectangle_collider) = player_collider_query.single();
+    let rectangle = CollisionRectangle::from_translation(
+        transform.translation.xy(),
+        rectangle_collider.width,
+        rectangle_collider.height,
+    )
+    .with_offset(PLAYER_COLLIDER_OFFSET);
 }
