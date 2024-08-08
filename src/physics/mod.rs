@@ -2,8 +2,8 @@ use bevy::prelude::*;
 use components::*;
 use systems::*;
 
+pub mod collisions;
 pub mod components;
-pub mod structs;
 pub mod systems;
 
 #[derive(Bundle, Clone)]

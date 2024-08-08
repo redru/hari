@@ -69,3 +69,13 @@ impl Edge {
         Self { v1, v2 }
     }
 }
+
+pub fn rectangles_collision_axis_aligned(
+    rect1: &CollisionRectangle,
+    rect2: &CollisionRectangle,
+) -> bool {
+    rect1.v1.x < rect2.v2.x
+        && rect1.v2.x > rect2.v1.x
+        && rect1.v1.y > rect2.v4.y
+        && rect1.v4.y < rect2.v1.y
+}

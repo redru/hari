@@ -2,14 +2,14 @@ use std::{f32::consts::PI, time::Duration};
 
 use bevy::{color::palettes::css::GREEN, prelude::*, sprite::MaterialMesh2dBundle};
 use hari::physics::{
+    collisions::{rectangles_collision_axis_aligned, CollisionRectangle},
     components::{RectangleCollider, Velocity},
-    structs::CollisionRectangle,
     PhysicsMovementBundle,
 };
 use rand::prelude::*;
 
 use super::{
-    components::{Player, Seagull, SeagullCounter, SeagullSpawnTimer},
+    components::{CurrentScore, Player, Seagull, SeagullCaught, SeagullCounter, SeagullSpawnTimer},
     MAX_SEAGULLS, PLAYER_COLLIDER_HEIGHT, PLAYER_COLLIDER_OFFSET, PLAYER_COLLIDER_WIDTH,
 };
 
@@ -108,6 +108,7 @@ pub fn spawn_seagull(
                 },
                 Seagull,
                 PhysicsMovementBundle::new(starting_position, Vec3::new(0., -280., 0.)),
+                RectangleCollider::new(true, 64., 50.),
             ));
 
             seagull_counter.0 += 1;
@@ -137,13 +138,55 @@ pub fn despawn_seagull(
 }
 
 pub fn check_player_collision(
+    mut ew_seagull_caught: EventWriter<SeagullCaught>,
     player_collider_query: Query<(&Transform, &RectangleCollider), With<Player>>,
+    mut seagull_collider_query: Query<
+        (Entity, &Transform, &mut RectangleCollider),
+        (With<Seagull>, Without<Player>),
+    >,
 ) {
-    let (transform, rectangle_collider) = player_collider_query.single();
-    let rectangle = CollisionRectangle::from_translation(
-        transform.translation.xy(),
-        rectangle_collider.width,
-        rectangle_collider.height,
+    let (player_transform, player_rectangle_collider) = player_collider_query.single();
+    let player_collision_rect = CollisionRectangle::from_translation(
+        player_transform.translation.xy(),
+        player_rectangle_collider.width,
+        player_rectangle_collider.height,
     )
     .with_offset(PLAYER_COLLIDER_OFFSET);
+
+    for (seagull_entity, seagull_transform, mut seagull_rectangle_collider) in
+        seagull_collider_query.iter_mut()
+    {
+        if !seagull_rectangle_collider.enabled {
+            continue;
+        }
+
+        let seagull_collision_rect = CollisionRectangle::from_translation(
+            seagull_transform.translation.xy(),
+            seagull_rectangle_collider.width,
+            seagull_rectangle_collider.height,
+        );
+
+        let is_collision =
+            rectangles_collision_axis_aligned(&player_collision_rect, &seagull_collision_rect);
+
+        if is_collision {
+            ew_seagull_caught.send(SeagullCaught(seagull_entity, 4));
+            seagull_rectangle_collider.enabled = false;
+        }
+    }
+}
+
+pub fn update_score(
+    mut commands: Commands,
+    mut seagull_counter: ResMut<SeagullCounter>,
+    mut er_seagull_caught: EventReader<SeagullCaught>,
+    mut current_score: ResMut<CurrentScore>,
+) {
+    for ev in er_seagull_caught.read() {
+        commands.entity(ev.0).despawn();
+        seagull_counter.0 -= 1;
+        current_score.0 += ev.1;
+
+        println!("current score {}", current_score.0);
+    }
 }

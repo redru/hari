@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use components::{SeagullCounter, SeagullSpawnTimer};
+use components::{CurrentScore, SeagullCaught, SeagullCounter, SeagullSpawnTimer};
 use hari::physics::{PhysicsPlugin, PhysicsSet};
 
 mod components;
@@ -25,11 +25,17 @@ impl Plugin for GamePlugin {
                 TimerMode::Repeating,
             )))
             .insert_resource(SeagullCounter(0))
+            .insert_resource(CurrentScore(0))
+            .add_event::<SeagullCaught>()
             .add_systems(Startup, systems::setup_system)
             .add_systems(Update, systems::handle_input_system.after(PhysicsSet))
             .add_systems(
                 FixedUpdate,
-                (systems::spawn_seagull, systems::despawn_seagull),
+                (
+                    systems::spawn_seagull,
+                    systems::despawn_seagull,
+                    systems::update_score,
+                ),
             )
             .add_systems(
                 FixedUpdate,
