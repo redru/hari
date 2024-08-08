@@ -6,6 +6,10 @@ pub struct CollisionRectangle {
     pub v2: Vec2,
     pub v3: Vec2,
     pub v4: Vec2,
+    e1: Edge,
+    e2: Edge,
+    e3: Edge,
+    e4: Edge,
 }
 
 impl CollisionRectangle {
@@ -13,11 +17,25 @@ impl CollisionRectangle {
         let half_width = width / 2.;
         let half_height = height / 2.;
 
+        let v1 = Vec2::new(xy.x - half_width, xy.y + half_height); // Top Left
+        let v2 = Vec2::new(xy.x + half_width, xy.y + half_height); // Top Right
+        let v3 = Vec2::new(xy.x + half_width, xy.y - half_height); // Bottom Right
+        let v4 = Vec2::new(xy.x - half_width, xy.y - half_height); // Bottom Left
+
+        let e1 = Edge::new(v1.clone(), v2.clone()); // Top
+        let e2 = Edge::new(v2.clone(), v3.clone()); // Right
+        let e3 = Edge::new(v3.clone(), v4.clone()); // Bottom
+        let e4 = Edge::new(v4.clone(), v1.clone()); // Left
+
         Self {
-            v1: Vec2::new(xy.x - half_width, xy.y + half_height), // Top Left
-            v2: Vec2::new(xy.x + half_width, xy.y + half_height), // Top Right
-            v3: Vec2::new(xy.x + half_width, xy.y - half_height), // Bottom Right
-            v4: Vec2::new(xy.x - half_width, xy.y - half_height), // Bottom Left
+            v1,
+            v2,
+            v3,
+            v4,
+            e1,
+            e2,
+            e3,
+            e4,
         }
     }
 
@@ -27,6 +45,27 @@ impl CollisionRectangle {
         self.v3 += offset;
         self.v4 += offset;
 
+        self.e1.v1 += offset;
+        self.e1.v2 += offset;
+        self.e2.v1 += offset;
+        self.e2.v2 += offset;
+        self.e3.v1 += offset;
+        self.e3.v2 += offset;
+        self.e4.v1 += offset;
+        self.e4.v2 += offset;
+
         self
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct Edge {
+    pub v1: Vec2,
+    pub v2: Vec2,
+}
+
+impl Edge {
+    pub fn new(v1: Vec2, v2: Vec2) -> Self {
+        Self { v1, v2 }
     }
 }
