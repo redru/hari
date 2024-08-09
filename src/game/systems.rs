@@ -9,7 +9,10 @@ use hari::physics::{
 use rand::prelude::*;
 
 use super::{
-    components::{CurrentScore, Player, Seagull, SeagullCaught, SeagullCounter, SeagullSpawnTimer},
+    components::{
+        spawn_seagull, CurrentScore, Player, Score, Seagull, SeagullCaught, SeagullCounter,
+        SeagullSpawnTimer,
+    },
     MAX_SEAGULLS, PLAYER_COLLIDER_HEIGHT, PLAYER_COLLIDER_OFFSET, PLAYER_COLLIDER_WIDTH,
 };
 
@@ -63,6 +66,57 @@ pub fn setup_system(
         });
 }
 
+pub fn setup_ui_system(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    current_score: ResMut<CurrentScore>,
+) {
+    commands
+        .spawn(NodeBundle {
+            style: Style {
+                margin: UiRect::all(Val::Px(20.)),
+                width: Val::Vw(100.0),
+                height: Val::Px(60.0),
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            ..default()
+        })
+        .with_children(|parent| {
+            parent.spawn((
+                NodeBundle {
+                    style: Style {
+                        width: Val::Px(32.),
+                        height: Val::Px(25.),
+                        ..default()
+                    },
+                    ..default()
+                },
+                UiImage::new(asset_server.load("1920x1080/gull_gizmo_32x25.png")),
+            ));
+
+            parent
+                .spawn(NodeBundle {
+                    style: Style { ..default() },
+                    ..default()
+                })
+                .with_children(|parent| {
+                    parent.spawn((
+                        TextBundle::from_section(
+                            format!("{}", current_score.0),
+                            TextStyle {
+                                font: asset_server
+                                    .load("1920x1080/Inconsolata-VariableFont_wdth,wght.ttf"),
+                                font_size: 40.0,
+                                color: Color::BLACK,
+                            },
+                        ),
+                        Score,
+                    ));
+                });
+        });
+}
+
 /// Handle keyboard input to move the player.
 pub fn handle_input_system(
     keyboard_input: Res<ButtonInput<KeyCode>>,
@@ -86,7 +140,7 @@ pub fn handle_input_system(
     }
 }
 
-pub fn spawn_seagull(
+pub fn spawn_seagull_system(
     mut commands: Commands,
     time: Res<Time<Fixed>>,
     mut seagull_counter: ResMut<SeagullCounter>,
@@ -100,16 +154,7 @@ pub fn spawn_seagull(
 
             let starting_position = Vec3::new(starting_x, 600., 1.);
 
-            commands.spawn((
-                SpriteBundle {
-                    transform: Transform::from_translation(starting_position.clone()),
-                    texture: asset_server.load("1920x1080/gull_1_64x50.png"),
-                    ..default()
-                },
-                Seagull,
-                PhysicsMovementBundle::new(starting_position, Vec3::new(0., -280., 0.)),
-                RectangleCollider::new(true, 64., 50.),
-            ));
+            spawn_seagull(&mut commands, &asset_server, starting_position);
 
             seagull_counter.0 += 1;
 
@@ -122,7 +167,7 @@ pub fn spawn_seagull(
     }
 }
 
-pub fn despawn_seagull(
+pub fn despawn_seagull_system(
     mut commands: Commands,
     mut seagull_counter: ResMut<SeagullCounter>,
     sea_gull_query: Query<(Entity, &Transform), With<Seagull>>,
@@ -170,23 +215,24 @@ pub fn check_player_collision(
             rectangles_collision_axis_aligned(&player_collision_rect, &seagull_collision_rect);
 
         if is_collision {
-            ew_seagull_caught.send(SeagullCaught(seagull_entity, 4));
+            ew_seagull_caught.send(SeagullCaught::new(seagull_entity, 1));
             seagull_rectangle_collider.enabled = false;
         }
     }
 }
 
-pub fn update_score(
+pub fn update_score_system(
     mut commands: Commands,
     mut seagull_counter: ResMut<SeagullCounter>,
     mut er_seagull_caught: EventReader<SeagullCaught>,
     mut current_score: ResMut<CurrentScore>,
+    mut score_query: Query<&mut Text, With<Score>>,
 ) {
     for ev in er_seagull_caught.read() {
-        commands.entity(ev.0).despawn();
+        commands.entity(ev.entity).despawn();
         seagull_counter.0 -= 1;
-        current_score.0 += ev.1;
-
-        println!("current score {}", current_score.0);
+        current_score.0 += ev.score;
     }
+
+    score_query.single_mut().sections.get_mut(0).unwrap().value = format!("{}", current_score.0);
 }

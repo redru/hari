@@ -27,14 +27,14 @@ impl Plugin for GamePlugin {
             .insert_resource(SeagullCounter(0))
             .insert_resource(CurrentScore(0))
             .add_event::<SeagullCaught>()
-            .add_systems(Startup, systems::setup_system)
+            .add_systems(Startup, (systems::setup_system, systems::setup_ui_system))
             .add_systems(Update, systems::handle_input_system.after(PhysicsSet))
             .add_systems(
                 FixedUpdate,
                 (
-                    systems::spawn_seagull,
-                    systems::despawn_seagull,
-                    systems::update_score,
+                    systems::spawn_seagull_system,
+                    systems::despawn_seagull_system,
+                    systems::update_score_system,
                 ),
             )
             .add_systems(
