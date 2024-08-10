@@ -10,9 +10,10 @@ use rand::prelude::*;
 
 use super::{
     components::{
-        spawn_seagull, CurrentScore, Player, Score, Seagull, SeagullCaught, SeagullCounter,
-        SeagullSpawnTimer,
+        spawn_seagull, spawn_seagull_score_gizmo_runner, CurrentScore, DestinationAndDestroy,
+        Player, Score, ScoreRunner, Seagull, SeagullCaught, SeagullCounter, SeagullSpawnTimer,
     },
+    math_utils::vec2_faces_point,
     MAX_SEAGULLS, PLAYER_COLLIDER_HEIGHT, PLAYER_COLLIDER_OFFSET, PLAYER_COLLIDER_WIDTH,
 };
 
@@ -184,7 +185,7 @@ pub fn despawn_seagull_system(
 
 pub fn check_player_collision(
     mut commands: Commands,
-    mut ew_seagull_caught: EventWriter<SeagullCaught>,
+    asset_server: Res<AssetServer>,
     player_collider_query: Query<(&Transform, &RectangleCollider), With<Player>>,
     mut seagull_collider_query: Query<(Entity, &Transform, &RectangleCollider), With<Seagull>>,
 ) {
@@ -203,18 +204,17 @@ pub fn check_player_collision(
             continue;
         }
 
+        let seagull_impact_position = seagull_transform.translation.xy();
+
         let seagull_collision_rect = CollisionRectangle::from_translation(
-            seagull_transform.translation.xy(),
+            seagull_impact_position,
             seagull_rectangle_collider.width,
             seagull_rectangle_collider.height,
         );
 
-        let is_collision =
-            rectangles_collision_axis_aligned(player_collision_rect, seagull_collision_rect);
-
-        if is_collision {
-            ew_seagull_caught.send(SeagullCaught::new(1));
+        if rectangles_collision_axis_aligned(player_collision_rect, seagull_collision_rect) {
             commands.entity(seagull_entity).despawn();
+            spawn_seagull_score_gizmo_runner(&mut commands, &asset_server, seagull_impact_position);
         }
     }
 }
@@ -231,4 +231,26 @@ pub fn update_score_system(
     }
 
     score_query.single_mut().sections.get_mut(0).unwrap().value = format!("{}", current_score.0);
+}
+
+pub fn score_runner_system(
+    mut commands: Commands,
+    mut ew_seagull_caught: EventWriter<SeagullCaught>,
+    destination_and_destroy_query: Query<
+        (Entity, &DestinationAndDestroy, &Transform, &Velocity),
+        With<ScoreRunner>,
+    >,
+) {
+    for (entity, destination_and_destroy, transform, velocity) in
+        destination_and_destroy_query.iter()
+    {
+        if !vec2_faces_point(
+            velocity.0.xy(),
+            transform.translation.xy(),
+            destination_and_destroy.0,
+        ) {
+            ew_seagull_caught.send(SeagullCaught::new(1));
+            commands.entity(entity).despawn();
+        }
+    }
 }

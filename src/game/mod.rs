@@ -3,6 +3,7 @@ use components::{CurrentScore, SeagullCaught, SeagullCounter, SeagullSpawnTimer}
 use hari::physics::{PhysicsPlugin, PhysicsSet};
 
 mod components;
+mod math_utils;
 mod systems;
 
 /// Since Bevy's default 2D camera setup is scaled such that
@@ -29,6 +30,7 @@ impl Plugin for GamePlugin {
             .add_event::<SeagullCaught>()
             .add_systems(Startup, (systems::setup_system, systems::setup_ui_system))
             .add_systems(Update, systems::handle_input_system.after(PhysicsSet))
+            .add_systems(Update, systems::score_runner_system)
             .add_systems(
                 FixedUpdate,
                 (
