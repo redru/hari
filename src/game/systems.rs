@@ -183,12 +183,10 @@ pub fn despawn_seagull_system(
 }
 
 pub fn check_player_collision(
+    mut commands: Commands,
     mut ew_seagull_caught: EventWriter<SeagullCaught>,
     player_collider_query: Query<(&Transform, &RectangleCollider), With<Player>>,
-    mut seagull_collider_query: Query<
-        (Entity, &Transform, &mut RectangleCollider),
-        (With<Seagull>, Without<Player>),
-    >,
+    mut seagull_collider_query: Query<(Entity, &Transform, &RectangleCollider), With<Seagull>>,
 ) {
     let (player_transform, player_rectangle_collider) = player_collider_query.single();
     let player_collision_rect = CollisionRectangle::from_translation(
@@ -198,7 +196,7 @@ pub fn check_player_collision(
     )
     .with_offset(PLAYER_COLLIDER_OFFSET);
 
-    for (seagull_entity, seagull_transform, mut seagull_rectangle_collider) in
+    for (seagull_entity, seagull_transform, seagull_rectangle_collider) in
         seagull_collider_query.iter_mut()
     {
         if !seagull_rectangle_collider.enabled {
@@ -212,24 +210,22 @@ pub fn check_player_collision(
         );
 
         let is_collision =
-            rectangles_collision_axis_aligned(&player_collision_rect, &seagull_collision_rect);
+            rectangles_collision_axis_aligned(player_collision_rect, seagull_collision_rect);
 
         if is_collision {
-            ew_seagull_caught.send(SeagullCaught::new(seagull_entity, 1));
-            seagull_rectangle_collider.enabled = false;
+            ew_seagull_caught.send(SeagullCaught::new(1));
+            commands.entity(seagull_entity).despawn();
         }
     }
 }
 
 pub fn update_score_system(
-    mut commands: Commands,
     mut seagull_counter: ResMut<SeagullCounter>,
     mut er_seagull_caught: EventReader<SeagullCaught>,
     mut current_score: ResMut<CurrentScore>,
     mut score_query: Query<&mut Text, With<Score>>,
 ) {
     for ev in er_seagull_caught.read() {
-        commands.entity(ev.entity).despawn();
         seagull_counter.0 -= 1;
         current_score.0 += ev.score;
     }

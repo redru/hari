@@ -25,13 +25,12 @@ pub struct CurrentScore(pub i32);
 
 #[derive(Event)]
 pub struct SeagullCaught {
-    pub entity: Entity,
     pub score: i32,
 }
 
 impl SeagullCaught {
-    pub fn new(entity: Entity, score: i32) -> Self {
-        Self { entity, score }
+    pub fn new(score: i32) -> Self {
+        Self { score }
     }
 }
 

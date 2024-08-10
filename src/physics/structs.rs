@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default)]
 pub struct CollisionRectangle {
     pub v1: Vec2,
     pub v2: Vec2,
@@ -58,7 +58,7 @@ impl CollisionRectangle {
     }
 }
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default)]
 pub struct Edge {
     pub v1: Vec2,
     pub v2: Vec2,
@@ -68,14 +68,4 @@ impl Edge {
     pub fn new(v1: Vec2, v2: Vec2) -> Self {
         Self { v1, v2 }
     }
-}
-
-pub fn rectangles_collision_axis_aligned(
-    rect1: CollisionRectangle,
-    rect2: CollisionRectangle,
-) -> bool {
-    rect1.v1.x < rect2.v2.x
-        && rect1.v2.x > rect2.v1.x
-        && rect1.v1.y > rect2.v4.y
-        && rect1.v4.y < rect2.v1.y
 }
