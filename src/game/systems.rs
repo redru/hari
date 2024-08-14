@@ -12,10 +12,22 @@ use super::{
     components::{
         spawn_seagull, spawn_seagull_score_gizmo_runner, CurrentScore, DestinationAndDestroy,
         Player, Score, ScoreRunner, Seagull, SeagullCaught, SeagullCounter, SeagullSpawnTimer,
+        Shark,
     },
     math_utils::vec2_faces_point,
     MAX_SEAGULLS, PLAYER_COLLIDER_HEIGHT, PLAYER_COLLIDER_OFFSET, PLAYER_COLLIDER_WIDTH,
 };
+
+pub fn setup_test_system(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn((
+        SpriteBundle {
+            transform: Transform::from_xyz(0., -200., 101.),
+            texture: asset_server.load("1920x1080/shark_200x200.png"),
+            ..default()
+        },
+        Shark::new(4000),
+    ));
+}
 
 pub fn setup_system(
     mut commands: Commands,
@@ -30,6 +42,13 @@ pub fn setup_system(
     commands.spawn(SpriteBundle {
         transform: Transform::from_xyz(0., 0., 0.),
         texture: asset_server.load("1920x1080/background.png"),
+        ..default()
+    });
+
+    // Background
+    commands.spawn(SpriteBundle {
+        transform: Transform::from_xyz(0., -365., 200.),
+        texture: asset_server.load("1920x1080/background_front.png"),
         ..default()
     });
 
@@ -48,7 +67,7 @@ pub fn setup_system(
             Player,
             RectangleCollider::new(true, PLAYER_COLLIDER_WIDTH, PLAYER_COLLIDER_HEIGHT),
         ))
-        .with_children(|parent| {
+        /*.with_children(|parent| {
             parent.spawn(MaterialMesh2dBundle {
                 mesh: meshes
                     .add(Rectangle::new(
@@ -64,7 +83,7 @@ pub fn setup_system(
                 material: materials.add(Color::from(GREEN)),
                 ..default()
             });
-        });
+        })*/;
 }
 
 pub fn setup_ui_system(
@@ -250,6 +269,18 @@ pub fn score_runner_system(
             destination_and_destroy.0,
         ) {
             ew_seagull_caught.send(SeagullCaught::new(1));
+            commands.entity(entity).despawn();
+        }
+    }
+}
+
+pub fn fixed_shark_system(
+    mut commands: Commands,
+    time: Res<Time<Fixed>>,
+    mut shark_query: Query<(Entity, &mut Shark)>,
+) {
+    for (entity, mut shark) in shark_query.iter_mut() {
+        if shark.alive_timer.tick(time.delta()).just_finished() {
             commands.entity(entity).despawn();
         }
     }

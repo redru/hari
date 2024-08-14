@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use bevy::prelude::*;
 use hari::physics::{components::RectangleCollider, PhysicsMovementBundle};
 
@@ -22,6 +24,21 @@ pub struct DestinationAndDestroy(pub Vec2);
 
 #[derive(Component)]
 pub struct ScoreRunner;
+
+#[derive(Component)]
+pub struct Shark {
+    pub alive_timer: Timer,
+    pub duration_ms: i32,
+}
+
+impl Shark {
+    pub fn new(duration_ms: i32) -> Self {
+        Self {
+            alive_timer: Timer::from_seconds(duration_ms as f32 / 1000., TimerMode::Once),
+            duration_ms: duration_ms,
+        }
+    }
+}
 
 #[derive(Resource)]
 pub struct SeagullCounter(pub i32);
