@@ -1,6 +1,6 @@
 use std::{f32::consts::PI, time::Duration};
 
-use bevy::{color::palettes::css::GREEN, prelude::*, sprite::MaterialMesh2dBundle};
+use bevy::prelude::*;
 use hari::physics::{
     collisions::{rectangles_collision_axis_aligned, CollisionRectangle},
     components::{RectangleCollider, Velocity},
@@ -11,8 +11,8 @@ use rand::prelude::*;
 use super::{
     components::{
         spawn_seagull, spawn_seagull_score_gizmo_runner, CurrentScore, DestinationAndDestroy,
-        Player, Score, ScoreRunner, Seagull, SeagullCaught, SeagullCounter, SeagullSpawnTimer,
-        Shark,
+        Player, PlayerAnimation, Score, ScoreRunner, Seagull, SeagullCaught, SeagullCounter,
+        SeagullSpawnTimer, Shark,
     },
     math_utils::vec2_faces_point,
     MAX_SEAGULLS, PLAYER_COLLIDER_HEIGHT, PLAYER_COLLIDER_OFFSET, PLAYER_COLLIDER_WIDTH,
@@ -29,12 +29,7 @@ pub fn setup_test_system(mut commands: Commands, asset_server: Res<AssetServer>)
     ));
 }
 
-pub fn setup_system(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-) {
+pub fn setup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Camera
     commands.spawn(Camera2dBundle::default());
 
@@ -45,7 +40,7 @@ pub fn setup_system(
         ..default()
     });
 
-    // Background
+    // Background front
     commands.spawn(SpriteBundle {
         transform: Transform::from_xyz(0., -365., 200.),
         texture: asset_server.load("1920x1080/background_front.png"),
@@ -56,34 +51,17 @@ pub fn setup_system(
     let player_position = Vec3::new(0., -60., 100.);
 
     // Player
-    commands
-        .spawn((
-            SpriteBundle {
-                transform: Transform::from_translation(player_position.clone()),
-                texture: boat_texture.clone(),
-                ..default()
-            },
-            PhysicsMovementBundle::new(player_position.clone(), Vec3::new(0., 0., 0.)),
-            Player,
-            RectangleCollider::new(true, PLAYER_COLLIDER_WIDTH, PLAYER_COLLIDER_HEIGHT),
-        ))
-        /*.with_children(|parent| {
-            parent.spawn(MaterialMesh2dBundle {
-                mesh: meshes
-                    .add(Rectangle::new(
-                        PLAYER_COLLIDER_WIDTH,
-                        PLAYER_COLLIDER_HEIGHT,
-                    ))
-                    .into(),
-                transform: Transform::from_translation(Vec3::new(
-                    PLAYER_COLLIDER_OFFSET.x,
-                    PLAYER_COLLIDER_OFFSET.y,
-                    100.,
-                )),
-                material: materials.add(Color::from(GREEN)),
-                ..default()
-            });
-        })*/;
+    commands.spawn((
+        SpriteBundle {
+            transform: Transform::from_translation(player_position.clone()),
+            texture: boat_texture.clone(),
+            ..default()
+        },
+        PhysicsMovementBundle::new(player_position.clone(), Vec3::new(0., 0., 0.)),
+        Player,
+        RectangleCollider::new(true, PLAYER_COLLIDER_WIDTH, PLAYER_COLLIDER_HEIGHT),
+        PlayerAnimation::new(player_position.y, player_position.y - 20.),
+    ));
 }
 
 pub fn setup_ui_system(
@@ -143,7 +121,7 @@ pub fn handle_input_system(
     mut query: Query<(&mut Velocity, &mut Transform), With<Player>>,
 ) {
     for (mut velocity, mut transform) in query.iter_mut() {
-        velocity.0 = Vec3::ZERO;
+        velocity.x = 0.;
 
         if keyboard_input.pressed(KeyCode::KeyA) {
             velocity.x -= 1.0;
@@ -154,9 +132,7 @@ pub fn handle_input_system(
             transform.rotation = Quat::default();
         }
 
-        // Need to normalize and scale because otherwise
-        // diagonal movement would be faster than horizontal or vertical movement.
-        velocity.0 = velocity.normalize_or_zero() * super::PLAYER_SPEED;
+        velocity.x = velocity.x * super::PLAYER_SPEED;
     }
 }
 
@@ -282,6 +258,55 @@ pub fn fixed_shark_system(
     for (entity, mut shark) in shark_query.iter_mut() {
         if shark.alive_timer.tick(time.delta()).just_finished() {
             commands.entity(entity).despawn();
+        }
+    }
+}
+
+pub fn animate_player(
+    mut player_query: Query<(&Transform, &PlayerAnimation, &mut Velocity), With<Player>>,
+) {
+    const FLOAT_CHANGE_FACTOR: f32 = 1.1;
+    const MAX_VEL: f32 = 20.;
+    const MIN_VEL: f32 = 10.;
+
+    let (player_transform, player_animation, mut player_velocity) =
+        player_query.get_single_mut().unwrap();
+
+    let current_y = player_transform.translation.y;
+
+    if current_y >= player_animation.vertical_top_value {
+        player_velocity.y = -1.;
+    } else if current_y <= player_animation.vertical_bottom_value {
+        player_velocity.y = 1.;
+    }
+
+    if player_velocity.y < 0. {
+        if current_y > player_animation.halfway {
+            // First half
+            player_velocity.y *= FLOAT_CHANGE_FACTOR;
+        } else {
+            // Second half
+            player_velocity.y /= FLOAT_CHANGE_FACTOR;
+        }
+
+        if player_velocity.y < -MAX_VEL {
+            player_velocity.y = -MAX_VEL;
+        } else if player_velocity.y > -MIN_VEL {
+            player_velocity.y = -MIN_VEL;
+        }
+    } else if player_velocity.y > 0. {
+        if current_y < player_animation.halfway {
+            // First half
+            player_velocity.y *= FLOAT_CHANGE_FACTOR;
+        } else {
+            // Second half
+            player_velocity.y /= FLOAT_CHANGE_FACTOR;
+        }
+
+        if player_velocity.y > MAX_VEL {
+            player_velocity.y = MAX_VEL;
+        } else if player_velocity.y < MIN_VEL {
+            player_velocity.y = MIN_VEL;
         }
     }
 }

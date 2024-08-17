@@ -45,11 +45,12 @@ impl Plugin for GamePlugin {
                     systems::despawn_seagull_system,
                     systems::update_score_system,
                     systems::fixed_shark_system,
+                    systems::animate_player,
                 ),
             )
             .add_systems(
                 FixedUpdate,
-                systems::check_player_collision.after(PhysicsSet),
+                (systems::check_player_collision).after(PhysicsSet),
             );
     }
 }

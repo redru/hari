@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use bevy::prelude::*;
 use hari::physics::{components::RectangleCollider, PhysicsMovementBundle};
 
@@ -28,14 +26,29 @@ pub struct ScoreRunner;
 #[derive(Component)]
 pub struct Shark {
     pub alive_timer: Timer,
-    pub duration_ms: i32,
 }
 
 impl Shark {
     pub fn new(duration_ms: i32) -> Self {
         Self {
             alive_timer: Timer::from_seconds(duration_ms as f32 / 1000., TimerMode::Once),
-            duration_ms: duration_ms,
+        }
+    }
+}
+
+#[derive(Component)]
+pub struct PlayerAnimation {
+    pub vertical_top_value: f32,
+    pub vertical_bottom_value: f32,
+    pub halfway: f32,
+}
+
+impl PlayerAnimation {
+    pub fn new(vertical_top_value: f32, vertical_bottom_value: f32) -> Self {
+        Self {
+            vertical_top_value,
+            vertical_bottom_value,
+            halfway: (vertical_top_value + vertical_bottom_value) / 2.,
         }
     }
 }
