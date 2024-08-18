@@ -1,6 +1,15 @@
 use bevy::prelude::*;
 
-use super::components::*;
+use super::{components::*, GRAVITY_VALUE};
+
+pub fn apply_gravity_system(
+    fixed_time: Res<Time<Fixed>>,
+    mut query: Query<(&mut Velocity, &Gravity)>,
+) {
+    for (mut velocity, gravity) in query.iter_mut() {
+        velocity.y -= gravity.0 * GRAVITY_VALUE * fixed_time.delta_seconds();
+    }
+}
 
 /// Advance the physics simulation by one fixed timestep. This may run zero or multiple times per frame.
 ///

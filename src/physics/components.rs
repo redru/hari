@@ -1,5 +1,21 @@
 use bevy::prelude::*;
 
+/// The value represents the ratio. The value of 1.0 means 9.8 m/s2
+#[derive(Debug, Component, Clone, Copy, PartialEq, Deref, DerefMut)]
+pub struct Gravity(pub f32);
+
+impl Gravity {
+    pub fn new(ratio: f32) -> Self {
+        Self(ratio)
+    }
+}
+
+impl Default for Gravity {
+    fn default() -> Self {
+        Self(1.0)
+    }
+}
+
 /// How many units per second the player should move.
 #[derive(Debug, Component, Clone, Copy, PartialEq, Default, Deref, DerefMut)]
 pub struct Velocity(pub Vec3);

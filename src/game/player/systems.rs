@@ -2,12 +2,15 @@ use std::f32::consts::PI;
 
 use bevy::{color::palettes::css::GREEN, prelude::*, sprite::MaterialMesh2dBundle};
 use hari::physics::{
-    components::{RectangleCollider, Velocity},
+    components::{Gravity, RectangleCollider, Velocity},
     PhysicsMovementBundle,
 };
 
+use crate::game::math_utils::lerp_f32;
+
 use super::{
     components::Player, PLAYER_COLLIDER_HEIGHT, PLAYER_COLLIDER_OFFSET, PLAYER_COLLIDER_WIDTH,
+    PLAYER_SPEED,
 };
 
 pub fn player_startup_system(
@@ -25,8 +28,9 @@ pub fn player_startup_system(
                 texture: asset_server.load("1920x1080/boat.png"),
                 ..default()
             },
-            PhysicsMovementBundle::new(player_position.clone(), Vec3::new(0., 0., 0.)),
             Player,
+            PhysicsMovementBundle::new(player_position.clone(), Vec3::new(0., 0., 0.)),
+            Gravity::new(0.0),
             RectangleCollider::new(true, PLAYER_COLLIDER_WIDTH, PLAYER_COLLIDER_HEIGHT),
         ))
         .with_children(|parent| {
@@ -54,19 +58,29 @@ pub fn handle_input_system(
     mut query: Query<(&mut Velocity, &mut Transform), With<Player>>,
 ) {
     for (mut velocity, mut transform) in query.iter_mut() {
-        velocity.0 = Vec3::ZERO;
+        let mut velocity_increase = 0.0;
 
         if keyboard_input.pressed(KeyCode::KeyA) {
-            velocity.x -= 1.0;
+            velocity_increase = -1.0;
             transform.rotation = Quat::from_rotation_y(PI);
         }
         if keyboard_input.pressed(KeyCode::KeyD) {
-            velocity.x += 1.0;
+            velocity_increase = 1.0;
             transform.rotation = Quat::default();
         }
 
-        // Need to normalize and scale because otherwise
-        // diagonal movement would be faster than horizontal or vertical movement.
-        velocity.0 = velocity.normalize_or_zero() * super::PLAYER_SPEED;
+        if velocity_increase == 0.0 {
+            // If no input press, change velocity using lerp 0
+            velocity.x = lerp_f32(velocity.x, 0.0, 0.002);
+        } else {
+            velocity.x += velocity_increase;
+
+            // Don't exit the PLAYER_SPEED boundaries
+            if velocity.x > PLAYER_SPEED {
+                velocity.x = PLAYER_SPEED;
+            } else if velocity.x < -PLAYER_SPEED {
+                velocity.x = -PLAYER_SPEED;
+            }
+        }
     }
 }

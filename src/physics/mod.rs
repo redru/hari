@@ -6,6 +6,8 @@ pub mod collisions;
 pub mod components;
 pub mod systems;
 
+const GRAVITY_VALUE: f32 = 9.8;
+
 #[derive(Bundle, Clone)]
 pub struct PhysicsMovementBundle {
     pub physical_translation: PhysicalTranslation,
@@ -37,8 +39,14 @@ pub struct PhysicsPlugin;
 
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(FixedUpdate, (advance_physics).in_set(PhysicsSet))
-            .add_systems(Update, (update_rendered_transform).in_set(PhysicsSet));
+        app.add_systems(
+            FixedUpdate,
+            apply_gravity_system
+                .before(advance_physics)
+                .in_set(PhysicsSet),
+        )
+        .add_systems(FixedUpdate, advance_physics.in_set(PhysicsSet))
+        .add_systems(Update, (update_rendered_transform).in_set(PhysicsSet));
     }
 }
 
