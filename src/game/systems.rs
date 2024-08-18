@@ -1,20 +1,17 @@
-use std::time::Duration;
-
 use bevy::prelude::*;
 use hari::physics::{
     collisions::{rectangles_collision_axis_aligned, CollisionRectangle},
     components::{RectangleCollider, Velocity},
 };
-use rand::prelude::*;
 
 use super::{
     components::{
-        spawn_seagull, spawn_seagull_score_gizmo_runner, CurrentScore, DestinationAndDestroy,
-        Score, ScoreRunner, Seagull, SeagullCaught, SeagullCounter, SeagullSpawnTimer,
+        spawn_seagull_score_gizmo_runner, CurrentScore, DestinationAndDestroy, Score, ScoreRunner,
+        SeagullCaught,
     },
     math_utils::vec2_faces_point,
     player::{components::Player, PLAYER_COLLIDER_OFFSET},
-    MAX_SEAGULLS,
+    seagull::components::{Seagull, SeagullCounter},
 };
 
 pub fn setup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -22,6 +19,12 @@ pub fn setup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(SpriteBundle {
         transform: Transform::from_xyz(0., 60., 0.),
         texture: asset_server.load("1920x1080/background.png"),
+        ..default()
+    });
+
+    commands.spawn(SpriteBundle {
+        transform: Transform::from_xyz(0., -305., 200.),
+        texture: asset_server.load("1920x1080/background_front.png"),
         ..default()
     });
 }
@@ -75,48 +78,6 @@ pub fn setup_ui_system(
                     ));
                 });
         });
-}
-
-pub fn spawn_seagull_system(
-    mut commands: Commands,
-    time: Res<Time<Fixed>>,
-    mut seagull_counter: ResMut<SeagullCounter>,
-    mut seagull_spawn_timer: ResMut<SeagullSpawnTimer>,
-    asset_server: Res<AssetServer>,
-) {
-    if seagull_counter.0 < MAX_SEAGULLS {
-        if seagull_spawn_timer.0.tick(time.delta()).just_finished() {
-            let mut rng = rand::thread_rng();
-            let starting_x = rng.gen_range(-850.0..=850.0);
-
-            let starting_position = Vec3::new(starting_x, 660., 1.);
-
-            spawn_seagull(&mut commands, &asset_server, starting_position);
-
-            seagull_counter.0 += 1;
-
-            let mut rng = rand::thread_rng();
-            let new_spawn_duration = rng.gen_range(100..=1300);
-            seagull_spawn_timer
-                .0
-                .set_duration(Duration::from_millis(new_spawn_duration));
-        }
-    }
-}
-
-pub fn despawn_seagull_system(
-    mut commands: Commands,
-    mut seagull_counter: ResMut<SeagullCounter>,
-    sea_gull_query: Query<(Entity, &Transform), With<Seagull>>,
-) {
-    let bottom_limit = -1080. / 2. + 300.;
-
-    for (entity, &transform) in sea_gull_query.iter() {
-        if transform.translation.y < bottom_limit {
-            commands.entity(entity).despawn();
-            seagull_counter.0 -= 1;
-        }
-    }
 }
 
 pub fn check_player_collision(

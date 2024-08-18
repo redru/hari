@@ -13,3 +13,7 @@ pub fn vec2_faces_point(direction: Vec2, position: Vec2, destination: Vec2) -> b
 pub fn lerp_f32(start_value: f32, end_value: f32, pct: f32) -> f32 {
     start_value + (end_value - start_value) * pct
 }
+
+pub fn easy_in(t: f32) -> f32 {
+    t * t
+}
