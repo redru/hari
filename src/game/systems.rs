@@ -1,70 +1,29 @@
-use std::{f32::consts::PI, time::Duration};
+use std::time::Duration;
 
-use bevy::{color::palettes::css::GREEN, prelude::*, sprite::MaterialMesh2dBundle};
+use bevy::prelude::*;
 use hari::physics::{
     collisions::{rectangles_collision_axis_aligned, CollisionRectangle},
     components::{RectangleCollider, Velocity},
-    PhysicsMovementBundle,
 };
 use rand::prelude::*;
 
 use super::{
     components::{
         spawn_seagull, spawn_seagull_score_gizmo_runner, CurrentScore, DestinationAndDestroy,
-        Player, Score, ScoreRunner, Seagull, SeagullCaught, SeagullCounter, SeagullSpawnTimer,
+        Score, ScoreRunner, Seagull, SeagullCaught, SeagullCounter, SeagullSpawnTimer,
     },
     math_utils::vec2_faces_point,
-    MAX_SEAGULLS, PLAYER_COLLIDER_HEIGHT, PLAYER_COLLIDER_OFFSET, PLAYER_COLLIDER_WIDTH,
+    player::{components::Player, PLAYER_COLLIDER_OFFSET},
+    MAX_SEAGULLS,
 };
 
-pub fn setup_system(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-) {
-    // Camera
-    commands.spawn(Camera2dBundle::default());
-
+pub fn setup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Background
     commands.spawn(SpriteBundle {
-        transform: Transform::from_xyz(0., 0., 0.),
+        transform: Transform::from_xyz(0., 60., 0.),
         texture: asset_server.load("1920x1080/background.png"),
         ..default()
     });
-
-    let boat_texture = asset_server.load("1920x1080/boat.png");
-    let player_position = Vec3::new(0., -60., 100.);
-
-    // Player
-    commands
-        .spawn((
-            SpriteBundle {
-                transform: Transform::from_translation(player_position.clone()),
-                texture: boat_texture.clone(),
-                ..default()
-            },
-            PhysicsMovementBundle::new(player_position.clone(), Vec3::new(0., 0., 0.)),
-            Player,
-            RectangleCollider::new(true, PLAYER_COLLIDER_WIDTH, PLAYER_COLLIDER_HEIGHT),
-        ))
-        .with_children(|parent| {
-            parent.spawn(MaterialMesh2dBundle {
-                mesh: meshes
-                    .add(Rectangle::new(
-                        PLAYER_COLLIDER_WIDTH,
-                        PLAYER_COLLIDER_HEIGHT,
-                    ))
-                    .into(),
-                transform: Transform::from_translation(Vec3::new(
-                    PLAYER_COLLIDER_OFFSET.x,
-                    PLAYER_COLLIDER_OFFSET.y,
-                    100.,
-                )),
-                material: materials.add(Color::from(GREEN)),
-                ..default()
-            });
-        });
 }
 
 pub fn setup_ui_system(
@@ -118,29 +77,6 @@ pub fn setup_ui_system(
         });
 }
 
-/// Handle keyboard input to move the player.
-pub fn handle_input_system(
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut Velocity, &mut Transform), With<Player>>,
-) {
-    for (mut velocity, mut transform) in query.iter_mut() {
-        velocity.0 = Vec3::ZERO;
-
-        if keyboard_input.pressed(KeyCode::KeyA) {
-            velocity.x -= 1.0;
-            transform.rotation = Quat::from_rotation_y(PI);
-        }
-        if keyboard_input.pressed(KeyCode::KeyD) {
-            velocity.x += 1.0;
-            transform.rotation = Quat::default();
-        }
-
-        // Need to normalize and scale because otherwise
-        // diagonal movement would be faster than horizontal or vertical movement.
-        velocity.0 = velocity.normalize_or_zero() * super::PLAYER_SPEED;
-    }
-}
-
 pub fn spawn_seagull_system(
     mut commands: Commands,
     time: Res<Time<Fixed>>,
@@ -153,7 +89,7 @@ pub fn spawn_seagull_system(
             let mut rng = rand::thread_rng();
             let starting_x = rng.gen_range(-850.0..=850.0);
 
-            let starting_position = Vec3::new(starting_x, 600., 1.);
+            let starting_position = Vec3::new(starting_x, 660., 1.);
 
             spawn_seagull(&mut commands, &asset_server, starting_position);
 
