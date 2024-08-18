@@ -6,7 +6,7 @@ pub mod collisions;
 pub mod components;
 pub mod systems;
 
-const GRAVITY_VALUE: f32 = 9.8;
+pub const GRAVITY_VALUE: f32 = 9.8;
 
 #[derive(Bundle, Clone)]
 pub struct PhysicsMovementBundle {

@@ -2,12 +2,9 @@ use bevy::prelude::*;
 
 use super::{components::*, GRAVITY_VALUE};
 
-pub fn apply_gravity_system(
-    fixed_time: Res<Time<Fixed>>,
-    mut query: Query<(&mut Velocity, &Gravity)>,
-) {
+pub fn apply_gravity_system(mut query: Query<(&mut Velocity, &Gravity)>) {
     for (mut velocity, gravity) in query.iter_mut() {
-        velocity.y -= gravity.0 * GRAVITY_VALUE * fixed_time.delta_seconds();
+        velocity.y -= gravity.0 * GRAVITY_VALUE;
     }
 }
 
