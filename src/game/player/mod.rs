@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 use hari::physics::PhysicsSet;
-use systems::{handle_input_system, handle_player_floating_system, player_startup_system};
+use systems::{
+    handle_input_system, handle_player_floating_system, player_movement_system,
+    player_startup_system,
+};
 
 pub mod components;
 pub mod systems;
@@ -16,6 +19,9 @@ impl Plugin for HariPlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, player_startup_system)
             .add_systems(Update, handle_input_system.after(PhysicsSet))
-            .add_systems(FixedUpdate, handle_player_floating_system.after(PhysicsSet));
+            .add_systems(
+                FixedUpdate,
+                (player_movement_system, handle_player_floating_system).after(PhysicsSet),
+            );
     }
 }

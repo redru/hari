@@ -8,7 +8,10 @@ use hari::physics::{
 
 use crate::game::math_utils::lerp_f32;
 
-use super::{components::Player, PLAYER_COLLIDER_HEIGHT, PLAYER_COLLIDER_WIDTH, PLAYER_SPEED};
+use super::{
+    components::{Movement, Player},
+    PLAYER_COLLIDER_HEIGHT, PLAYER_COLLIDER_WIDTH, PLAYER_SPEED,
+};
 
 pub fn player_startup_system(
     mut commands: Commands,
@@ -24,7 +27,7 @@ pub fn player_startup_system(
             texture: asset_server.load("1920x1080/boat.png"),
             ..default()
         },
-        Player,
+        Player::default(),
         PhysicsMovementBundle::new(player_position.clone(), Vec3::new(0., 0., 0.)),
         Gravity::default(),
         RectangleCollider::new(true, PLAYER_COLLIDER_WIDTH, PLAYER_COLLIDER_HEIGHT),
@@ -51,32 +54,43 @@ pub fn player_startup_system(
 /// Handle keyboard input to move the player.
 pub fn handle_input_system(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut Velocity, &mut Transform), With<Player>>,
+    mut query: Query<(&mut Player, &mut Transform)>,
 ) {
-    for (mut velocity, mut transform) in query.iter_mut() {
-        let mut velocity_increase = 0.0;
-
+    for (mut player, mut transform) in query.iter_mut() {
         if keyboard_input.pressed(KeyCode::KeyA) {
-            velocity_increase = -1.0;
+            player.movement = Movement::Left;
             transform.rotation = Quat::from_rotation_y(PI);
         }
         if keyboard_input.pressed(KeyCode::KeyD) {
-            velocity_increase = 1.0;
+            player.movement = Movement::Right;
             transform.rotation = Quat::default();
         }
+        if !keyboard_input.pressed(KeyCode::KeyA) && !keyboard_input.pressed(KeyCode::KeyD) {
+            player.movement = Movement::None;
+        }
+    }
+}
 
-        if velocity_increase == 0.0 {
-            // If no input press, change velocity using lerp 0
-            velocity.x = lerp_f32(velocity.x, 0.0, 0.002);
-        } else {
-            velocity.x += velocity_increase;
+pub fn player_movement_system(mut query: Query<(&Player, &mut Velocity)>) {
+    let (player, mut velocity) = query.single_mut();
 
-            // Don't exit the PLAYER_SPEED boundaries
-            if velocity.x > PLAYER_SPEED {
-                velocity.x = PLAYER_SPEED;
-            } else if velocity.x < -PLAYER_SPEED {
-                velocity.x = -PLAYER_SPEED;
-            }
+    let velocity_increase = match player.movement {
+        Movement::None => 0.0,
+        Movement::Left => -1.0,
+        Movement::Right => 1.0,
+    };
+
+    if velocity_increase == 0.0 {
+        // If no input press, change velocity using lerp 0
+        velocity.x = lerp_f32(velocity.x, 0.0, 0.002);
+    } else {
+        velocity.x += velocity_increase;
+
+        // Don't exit the PLAYER_SPEED boundaries
+        if velocity.x > PLAYER_SPEED {
+            velocity.x = PLAYER_SPEED;
+        } else if velocity.x < -PLAYER_SPEED {
+            velocity.x = -PLAYER_SPEED;
         }
     }
 }
