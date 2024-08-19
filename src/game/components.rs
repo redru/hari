@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use hari::physics::PhysicsMovementBundle;
 
-const SCORE_GIZMO_RUNNER_DEST: Vec2 = Vec2::new(-940., 500.);
+const SCORE_GIZMO_RUNNER_DEST: Vec2 = Vec2::new(-940., 550.);
 const SCORE_GIRZMO_RUNNER_SPEED: f32 = 2000.;
 
 #[derive(Component)]

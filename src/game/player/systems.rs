@@ -6,11 +6,12 @@ use hari::physics::{
     PhysicsMovementBundle,
 };
 
-use crate::game::math_utils::lerp_f32;
+use crate::game::math_utils::{lerp_ease_in_out, lerp_f32};
 
 use super::{
     components::{Movement, Player},
-    PLAYER_COLLIDER_HEIGHT, PLAYER_COLLIDER_WIDTH, PLAYER_SPEED,
+    PLAYER_COLLIDER_HEIGHT, PLAYER_COLLIDER_WIDTH, PLAYER_OSCILLATION_MAX,
+    PLAYER_OSCILLATION_SECONDS, PLAYER_SPEED,
 };
 
 pub fn player_startup_system(
@@ -54,16 +55,14 @@ pub fn player_startup_system(
 /// Handle keyboard input to move the player.
 pub fn handle_input_system(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut Player, &mut Transform)>,
+    mut query: Query<(&mut Player)>,
 ) {
-    for (mut player, mut transform) in query.iter_mut() {
+    for mut player in query.iter_mut() {
         if keyboard_input.pressed(KeyCode::KeyA) {
             player.movement = Movement::Left;
-            transform.rotation = Quat::from_rotation_y(PI);
         }
         if keyboard_input.pressed(KeyCode::KeyD) {
             player.movement = Movement::Right;
-            transform.rotation = Quat::default();
         }
         if !keyboard_input.pressed(KeyCode::KeyA) && !keyboard_input.pressed(KeyCode::KeyD) {
             player.movement = Movement::None;
@@ -71,18 +70,27 @@ pub fn handle_input_system(
     }
 }
 
-pub fn player_movement_system(mut query: Query<(&Player, &mut Velocity)>) {
-    let (player, mut velocity) = query.single_mut();
+pub fn player_movement_system(mut query: Query<(&Player, &mut Transform, &mut Velocity)>) {
+    let (player, mut transform, mut velocity) = query.single_mut();
+    let mut velocity_increase = 0.0;
+    let previous_rotation = transform.rotation;
+    transform.rotation = Quat::default();
+    transform.rotate_z(previous_rotation.to_euler(EulerRot::YXZ).2);
 
-    let velocity_increase = match player.movement {
-        Movement::None => 0.0,
-        Movement::Left => -1.0,
-        Movement::Right => 1.0,
+    match player.movement {
+        Movement::None => transform.rotate_y(previous_rotation.to_euler(EulerRot::YXZ).0),
+        Movement::Left => {
+            transform.rotate_y(PI);
+            velocity_increase = -20.0;
+        }
+        Movement::Right => {
+            velocity_increase = 20.0;
+        }
     };
 
     if velocity_increase == 0.0 {
-        // If no input press, change velocity using lerp 0
-        velocity.x = lerp_f32(velocity.x, 0.0, 0.002);
+        // If no input press, change velocity until reaching 0 using lerp
+        velocity.x = lerp_f32(velocity.x, 0.0, 0.05);
     } else {
         velocity.x += velocity_increase;
 
@@ -108,6 +116,7 @@ pub fn handle_player_floating_system(
         velocity.y += WATER_FORCE * sea_level_distance / 8.0;
     }
 
+    // Limit vertical velocity to avoid the ship jumping when emerging
     if velocity.y > 40.0 {
         velocity.y = 40.0;
     }
@@ -115,4 +124,26 @@ pub fn handle_player_floating_system(
     if velocity.y < -60.0 {
         velocity.y = -60.0;
     }
+}
+
+pub fn oscillate_player(
+    fixed_time: Res<Time<Fixed>>,
+    mut query: Query<(&mut Transform, &mut Player)>,
+) {
+    let (mut transform, mut player) = query.single_mut();
+    player.oscillation_timer.tick(fixed_time.delta());
+
+    let rotation_z = lerp_ease_in_out(
+        -PLAYER_OSCILLATION_MAX,
+        PLAYER_OSCILLATION_MAX,
+        (PLAYER_OSCILLATION_SECONDS - player.oscillation_timer.elapsed_secs())
+            / PLAYER_OSCILLATION_SECONDS,
+    );
+
+    const ROTATION_VELOCITY: f32 = 30.0;
+
+    let previous_rotation = transform.rotation;
+    transform.rotation = Quat::default();
+    transform.rotate_y(previous_rotation.to_euler(EulerRot::YXZ).0);
+    transform.rotate_z(rotation_z * fixed_time.delta_seconds() * ROTATION_VELOCITY);
 }
