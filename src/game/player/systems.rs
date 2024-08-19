@@ -55,7 +55,7 @@ pub fn player_startup_system(
 /// Handle keyboard input to move the player.
 pub fn handle_input_system(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut Player)>,
+    mut query: Query<&mut Player>,
 ) {
     for mut player in query.iter_mut() {
         if keyboard_input.pressed(KeyCode::KeyA) {
