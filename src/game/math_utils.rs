@@ -11,11 +11,21 @@ pub fn vec2_faces_point(direction: Vec2, position: Vec2, destination: Vec2) -> b
 }
 
 pub fn lerp_f32(start_value: f32, end_value: f32, t: f32) -> f32 {
+    debug_assert!(
+        t >= 0.0 && t <= 1.0,
+        "'t' must be between 0.0 and 1.0, but it was {}",
+        t
+    );
     start_value + (end_value - start_value) * t
 }
 
 // This must be fixed, it is wrong function
 pub fn lerp_ease_in_out_quad(start_value: f32, end_value: f32, t: f32) -> f32 {
+    debug_assert!(
+        t >= 0.0 && t <= 1.0,
+        "'t' must be between 0.0 and 1.0, but it was {}",
+        t
+    );
     lerp_f32(start_value, end_value, spike(ease_in_out_quad(t)))
 }
 
@@ -28,6 +38,11 @@ pub fn ease_in_out_quad(t: f32) -> f32 {
 }
 
 pub fn flip(t: f32) -> f32 {
+    debug_assert!(
+        t >= 0.0 && t <= 1.0,
+        "'t' must be between 0.0 and 1.0, but it was {}",
+        t
+    );
     1.0 - t
 }
 
@@ -40,5 +55,10 @@ pub fn spike(t: f32) -> f32 {
 }
 
 pub fn square(t: f32) -> f32 {
+    debug_assert!(
+        t >= 0.0 && t <= 1.0,
+        "'t' must be between 0.0 and 1.0, but it was {}",
+        t
+    );
     t * t
 }
