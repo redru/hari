@@ -20,7 +20,7 @@ pub fn group_section() -> NodeBundle {
         style: Style {
             margin: UiRect::all(Val::Px(20.)),
             height: Val::Percent(100.0),
-            width: Val::Px(70.0),
+            width: Val::Px(100.0),
             align_items: AlignItems::Center,
             column_gap: Val::Px(10.0),
             ..default()
