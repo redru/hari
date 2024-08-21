@@ -6,7 +6,7 @@ use hari::physics::{
     PhysicsMovementBundle,
 };
 
-use crate::game::math_utils::{lerp_ease_in_out, lerp_f32};
+use crate::game::math_utils::{lerp_ease_in_out_quad, lerp_f32};
 
 use super::{
     components::{Movement, Player},
@@ -133,7 +133,7 @@ pub fn oscillate_player(
     let (mut transform, mut player) = query.single_mut();
     player.oscillation_timer.tick(fixed_time.delta());
 
-    let rotation_z = lerp_ease_in_out(
+    let rotation_z = lerp_ease_in_out_quad(
         -PLAYER_OSCILLATION_MAX,
         PLAYER_OSCILLATION_MAX,
         (PLAYER_OSCILLATION_SECONDS - player.oscillation_timer.elapsed_secs())

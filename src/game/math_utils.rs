@@ -15,8 +15,16 @@ pub fn lerp_f32(start_value: f32, end_value: f32, t: f32) -> f32 {
 }
 
 // This must be fixed, it is wrong function
-pub fn lerp_ease_in_out(start_value: f32, end_value: f32, t: f32) -> f32 {
-    lerp_f32(start_value, end_value, spike(t))
+pub fn lerp_ease_in_out_quad(start_value: f32, end_value: f32, t: f32) -> f32 {
+    lerp_f32(start_value, end_value, spike(ease_in_out_quad(t)))
+}
+
+pub fn ease_in_out_quad(t: f32) -> f32 {
+    match t {
+        0.0..0.5 => 2.0 * square(t),
+        0.5..=1.0 => flip(square((-2.0 * t) + 2.0) / 2.0),
+        _ => panic!("'t' must be between 0.0 and 1.0, but it was {}", t),
+    }
 }
 
 pub fn flip(t: f32) -> f32 {
@@ -25,20 +33,12 @@ pub fn flip(t: f32) -> f32 {
 
 pub fn spike(t: f32) -> f32 {
     match t {
-        0.0..0.5 => ease_in(t / 0.5),
-        0.5..=1.0 => ease_out(flip(t) / 0.5),
+        0.0..0.5 => t / 0.5,
+        0.5..=1.0 => flip(t) / 0.5,
         _ => panic!("'t' must be between 0.0 and 1.0, but it was {}", t),
     }
 }
 
 pub fn square(t: f32) -> f32 {
     t * t
-}
-
-pub fn ease_in(t: f32) -> f32 {
-    square(t)
-}
-
-pub fn ease_out(t: f32) -> f32 {
-    flip(square(flip(t)))
 }
