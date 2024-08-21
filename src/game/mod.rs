@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use camera::HariCameraPlugin;
-use components::{CurrentScore, SeagullCaught};
+use components::{CurrentLifes, CurrentScore, SeagullCaught};
 use hari::physics::{PhysicsPlugin, PhysicsSet};
 use player::HariPlayerPlugin;
 use seagull::SeagullPlugin;
@@ -24,6 +24,7 @@ impl Plugin for GamePlugin {
             .add_plugins(SeagullPlugin)
             .add_plugins(HariUIPlugin)
             .insert_resource(CurrentScore(0))
+            .insert_resource(CurrentLifes(5))
             .add_event::<SeagullCaught>()
             .add_systems(Startup, systems::setup_system)
             .add_systems(Update, systems::score_runner_system)

@@ -1,56 +1,40 @@
 use bevy::prelude::*;
 
-use crate::game::components::{CurrentScore, Score, SeagullCaught};
+use crate::game::components::{CurrentLifes, CurrentScore, Score, SeagullCaught};
+
+use super::components::{boat_gizmo, group_section, gull_gizmo, lifes_text, score_text, top_bar};
 
 pub fn ui_startup_system(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    current_score: ResMut<CurrentScore>,
+    current_score: Res<CurrentScore>,
+    current_lifes: Res<CurrentLifes>,
 ) {
-    commands
-        .spawn(NodeBundle {
-            style: Style {
-                margin: UiRect::all(Val::Px(20.)),
-                width: Val::Vw(100.0),
-                height: Val::Px(60.0),
-                align_items: AlignItems::Center,
-                ..default()
-            },
-            ..default()
-        })
-        .with_children(|parent| {
-            parent.spawn((
-                NodeBundle {
-                    style: Style {
-                        width: Val::Px(32.),
-                        height: Val::Px(25.),
-                        ..default()
-                    },
-                    ..default()
-                },
-                UiImage::new(asset_server.load("1920x1080/gull_gizmo_32x25.png")),
-            ));
-
+    commands.spawn(top_bar()).with_children(|parent| {
+        parent.spawn(group_section()).with_children(|parent| {
+            parent.spawn(gull_gizmo(&asset_server));
             parent
                 .spawn(NodeBundle {
                     style: Style { ..default() },
                     ..default()
                 })
                 .with_children(|parent| {
-                    parent.spawn((
-                        TextBundle::from_section(
-                            format!("{}", current_score.0),
-                            TextStyle {
-                                font: asset_server
-                                    .load("1920x1080/Inconsolata-VariableFont_wdth,wght.ttf"),
-                                font_size: 40.0,
-                                color: Color::BLACK,
-                            },
-                        ),
-                        Score,
-                    ));
+                    parent.spawn(score_text(&asset_server, &current_score));
                 });
         });
+
+        parent.spawn(group_section()).with_children(|parent| {
+            parent.spawn(boat_gizmo(&asset_server));
+            parent
+                .spawn(NodeBundle {
+                    style: Style { ..default() },
+                    ..default()
+                })
+                .with_children(|parent| {
+                    parent.spawn(lifes_text(&asset_server, &current_lifes));
+                });
+        });
+    });
 }
 
 pub fn update_score_system(

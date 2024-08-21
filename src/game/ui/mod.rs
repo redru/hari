@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use systems::{ui_startup_system, update_score_system};
 
+pub mod components;
 pub mod systems;
 
 pub struct HariUIPlugin;
