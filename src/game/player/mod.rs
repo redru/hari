@@ -12,8 +12,8 @@ pub mod systems;
 
 pub const PLAYER_SPEED: f32 = 500.0;
 pub const PLAYER_COLLIDER_WIDTH: f32 = 220.0;
-pub const PLAYER_COLLIDER_HEIGHT: f32 = 50.0;
-pub const PLAYER_COLLIDER_OFFSET: Vec2 = Vec2::new(0.0, -120.0);
+pub const PLAYER_COLLIDER_HEIGHT: f32 = 18.0;
+pub const PLAYER_COLLIDER_OFFSET: Vec2 = Vec2::new(0.0, -100.0);
 pub const PLAYER_OSCILLATION_SECONDS: f32 = 4.0;
 pub const PLAYER_OSCILLATION_MAX: f32 = PI / 30.0;
 
