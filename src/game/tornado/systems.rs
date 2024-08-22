@@ -1,12 +1,13 @@
 use std::time::Duration;
 
 use bevy::prelude::*;
+use rand::Rng;
 
 use crate::game::math_utils::lerp_f32;
 
 use super::components::{Tornado, TornadoState, TornadoTimer, TORNADO_ENTERING_DURATION};
 
-const TORNADO_SPAWN_HEIGHT: f32 = 600.;
+const TORNADO_SPAWN_HEIGHT: f32 = 700.;
 
 pub fn spawn_tornado(
     mut commands: Commands,
@@ -15,7 +16,10 @@ pub fn spawn_tornado(
     mut tornado_timer: ResMut<TornadoTimer>,
 ) {
     if tornado_timer.0.tick(fixed_time.delta()).just_finished() {
-        let tornado_position = Vec3::new(0., TORNADO_SPAWN_HEIGHT, 99.);
+        let mut rng = rand::thread_rng();
+        let starting_x = rng.gen_range(-850.0..=850.0);
+
+        let tornado_position = Vec3::new(starting_x, TORNADO_SPAWN_HEIGHT, 99.);
 
         commands.spawn((
             SpriteBundle {
@@ -31,6 +35,7 @@ pub fn spawn_tornado(
 pub fn tornado_lifecycle_system(
     mut commands: Commands,
     fixed_time: Res<Time<Fixed>>,
+    mut tornado_timer: ResMut<TornadoTimer>,
     mut query: Query<(Entity, &mut Tornado)>,
 ) {
     if query.iter().count() == 0 {
@@ -59,6 +64,7 @@ pub fn tornado_lifecycle_system(
         super::components::TornadoState::Exiting => {
             if tornado.timer.just_finished() {
                 commands.entity(entity).despawn();
+                tornado_timer.reset();
             }
         }
     }

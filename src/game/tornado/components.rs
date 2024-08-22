@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-pub const TORNADO_ENTERING_DURATION: f32 = 4.;
+pub const TORNADO_ENTERING_DURATION: f32 = 3.;
 
 pub enum TornadoState {
     Entering,
@@ -25,5 +25,5 @@ impl Tornado {
     }
 }
 
-#[derive(Resource)]
+#[derive(Resource, Deref, DerefMut)]
 pub struct TornadoTimer(pub Timer);
