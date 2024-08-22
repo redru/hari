@@ -11,7 +11,7 @@ pub enum TornadoState {
 #[derive(Component)]
 pub struct Tornado {
     pub timer: Timer,
-    pub thrown_shots: i32,
+    pub shots_timer: Timer,
     pub state: TornadoState,
 }
 
@@ -19,7 +19,7 @@ impl Tornado {
     pub fn new() -> Self {
         Self {
             timer: Timer::from_seconds(TORNADO_ENTERING_DURATION, TimerMode::Once),
-            thrown_shots: 0,
+            shots_timer: Timer::from_seconds(1.5, TimerMode::Once),
             state: TornadoState::Entering,
         }
     }

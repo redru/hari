@@ -10,6 +10,10 @@ pub fn vec2_faces_point(direction: Vec2, position: Vec2, destination: Vec2) -> b
     direction.dot(direction_to_dest) > 0.9
 }
 
+pub fn atan2(normalized: Vec3) -> f32 {
+    normalized.y.atan2(normalized.x)
+}
+
 pub fn lerp_f32(start_value: f32, end_value: f32, t: f32) -> f32 {
     debug_assert!(
         t >= 0.0 && t <= 1.0,

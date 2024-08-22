@@ -3,7 +3,7 @@ use std::time::Duration;
 use bevy::prelude::*;
 use rand::Rng;
 
-use crate::game::math_utils::lerp_f32;
+use crate::game::{math_utils::lerp_f32, player::components::Player, shark::new_shark_bundle};
 
 use super::components::{Tornado, TornadoState, TornadoTimer, TORNADO_ENTERING_DURATION};
 
@@ -87,5 +87,39 @@ pub fn tornado_executor_system(mut query: Query<(&mut Transform, &Tornado)>) {
         }
         TornadoState::Executing => {}
         TornadoState::Exiting => {}
+    }
+}
+
+pub fn tornado_shot_system(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    fixed_time: Res<Time<Fixed>>,
+    mut tornado_query: Query<(&Transform, &mut Tornado)>,
+    player_query: Query<&Transform, With<Player>>,
+) {
+    if tornado_query.iter().count() == 0 {
+        return;
+    }
+
+    let (tornado_transform, mut tornado) = tornado_query.single_mut();
+
+    if tornado.shots_timer.tick(fixed_time.delta()).finished() {
+        let player_transform = player_query.single();
+        let player_distance = player_transform.translation.x - tornado_transform.translation.x;
+        let x_shark_force = player_distance * 0.5;
+
+        commands.spawn(new_shark_bundle(
+            asset_server,
+            tornado_transform.translation,
+            Vec3::new(x_shark_force, 600., 0.),
+        ));
+
+        let mut rng = rand::thread_rng();
+        let new_shots_timer_duration = rng.gen_range(800..=1800);
+
+        tornado.shots_timer.reset();
+        tornado
+            .shots_timer
+            .set_duration(Duration::from_millis(new_shots_timer_duration));
     }
 }

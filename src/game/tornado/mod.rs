@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use components::TornadoTimer;
-use systems::{spawn_tornado, tornado_executor_system, tornado_lifecycle_system};
+use systems::{
+    spawn_tornado, tornado_executor_system, tornado_lifecycle_system, tornado_shot_system,
+};
 
 pub mod components;
 pub mod systems;
@@ -15,13 +17,10 @@ impl Plugin for HariTornadoPlugin {
             TORNATO_COLDOWN,
             TimerMode::Once,
         )))
+        .add_systems(Update, tornado_executor_system)
         .add_systems(
             FixedUpdate,
-            (
-                spawn_tornado,
-                tornado_lifecycle_system,
-                tornado_executor_system,
-            ),
+            (spawn_tornado, tornado_lifecycle_system, tornado_shot_system),
         );
     }
 }
