@@ -24,12 +24,12 @@ pub fn player_startup_system(
 
     commands.spawn((
         SpriteBundle {
-            transform: Transform::from_translation(player_position.clone()),
+            transform: Transform::from_translation(player_position),
             texture: asset_server.load("1920x1080/boat.png"),
             ..default()
         },
         Player::default(),
-        PhysicsMovementBundle::new(player_position.clone(), Vec3::new(0., 0., 0.)),
+        PhysicsMovementBundle::new(player_position, Vec3::new(0., 0., 0.)),
         Gravity::default(),
         RectangleCollider::new(true, PLAYER_COLLIDER_WIDTH, PLAYER_COLLIDER_HEIGHT),
     ));
@@ -136,8 +136,7 @@ pub fn oscillate_player(
     let rotation_z = lerp_ease_in_out_quad(
         -PLAYER_OSCILLATION_MAX,
         PLAYER_OSCILLATION_MAX,
-        (PLAYER_OSCILLATION_SECONDS - player.oscillation_timer.elapsed_secs())
-            / PLAYER_OSCILLATION_SECONDS,
+        player.oscillation_timer.elapsed_secs() / PLAYER_OSCILLATION_SECONDS,
     );
 
     const ROTATION_VELOCITY: f32 = 30.0;

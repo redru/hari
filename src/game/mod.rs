@@ -4,6 +4,7 @@ use components::{CurrentLifes, CurrentScore, SeagullCaught};
 use hari::physics::{PhysicsPlugin, PhysicsSet};
 use player::HariPlayerPlugin;
 use seagull::SeagullPlugin;
+use tornado::HariTornadoPlugin;
 use ui::HariUIPlugin;
 
 mod camera;
@@ -12,6 +13,7 @@ mod math_utils;
 mod player;
 mod seagull;
 mod systems;
+mod tornado;
 mod ui;
 
 pub struct GamePlugin;
@@ -23,6 +25,7 @@ impl Plugin for GamePlugin {
             .add_plugins(HariPlayerPlugin)
             .add_plugins(SeagullPlugin)
             .add_plugins(HariUIPlugin)
+            .add_plugins(HariTornadoPlugin)
             .insert_resource(CurrentScore(0))
             .insert_resource(CurrentLifes(5))
             .add_event::<SeagullCaught>()
