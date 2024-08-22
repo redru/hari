@@ -108,10 +108,19 @@ pub fn tornado_shot_system(
         let player_distance = player_transform.translation.x - tornado_transform.translation.x;
         let x_shark_force = player_distance * 0.5;
 
+        let mut rng = rand::thread_rng();
+        let random_force_multiplier = rng.gen_range(0.8..=1.2);
+
+        let shark_force = Vec3::new(
+            x_shark_force * random_force_multiplier,
+            600. * random_force_multiplier,
+            0.,
+        );
+
         commands.spawn(new_shark_bundle(
             asset_server,
             tornado_transform.translation,
-            Vec3::new(x_shark_force, 600., 0.),
+            shark_force,
         ));
 
         let mut rng = rand::thread_rng();
